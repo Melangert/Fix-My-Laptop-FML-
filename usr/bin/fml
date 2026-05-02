@@ -1,12 +1,13 @@
 #!/bin/bash
-# fixmylaptop — lightweight Linux system maintenance tool
+# fml — Fix My Linux
+# A lightweight system maintenance tool for low-spec Linux machines
 # https://github.com/Melangert/Fix-My-Laptop-FML-
 # License: MIT
 
 set -uo pipefail
 
-VERSION="1.0.0-1"
-SCRIPT_NAME="fixmylaptop"
+VERSION="1.1.0"
+SCRIPT_NAME="fml"
 
 # ── Color support ──────────────────────────────────────────────────────────────
 if [[ -t 1 ]] && [[ "${NO_COLOR:-}" == "" ]]; then
@@ -21,7 +22,7 @@ info()    { echo -e "${CYAN}→${RESET} $*"; }
 success() { echo -e "${GREEN}✔${RESET} $*"; }
 warn()    { echo -e "${YELLOW}⚠${RESET}  $*"; }
 error()   { echo -e "${RED}✖${RESET}  $*" >&2; }
-header()  { echo -e "\n${BOLD}$*${RESET}"; }
+header()  { echo -e "\n${BOLD}━━ $* ━━${RESET}"; }
 
 pause() {
     echo ""
@@ -30,11 +31,6 @@ pause() {
 
 require_command() {
     command -v "$1" >/dev/null 2>&1
-}
-
-# Returns 0 if sudo is available and user can use it
-have_sudo() {
-    require_command sudo && sudo -n true 2>/dev/null
 }
 
 run_sudo() {
@@ -53,8 +49,7 @@ confirm() {
     [[ "$answer" =~ ^[Yy]$ ]]
 }
 
-# ── Commands ───────────────────────────────────────────────────────────────────
-
+# ── Status ─────────────────────────────────────────────────────────────────────
 status() {
     header "System Status"
 
@@ -63,8 +58,8 @@ status() {
 
     info "Memory:"
     free -h | awk '
-        /^Mem:/ { printf "   Used: %s / %s (%.0f%%)\n", $3, $2, $3/$2*100 }
-        /^Swap:/ { if ($2 != "0") printf "   Swap: %s / %s\n", $3, $2 }
+        /^Mem:/  { printf "   Used: %s / %s\n", $3, $2 }
+        /^Swap:/ { if ($2 != "0B") printf "   Swap: %s / %s\n", $3, $2 }
     '
 
     info "Disk (/):"
@@ -74,56 +69,59 @@ status() {
     uptime -p 2>/dev/null || uptime
 }
 
+# ── Top processes ──────────────────────────────────────────────────────────────
 topcpu() {
     header "Top Resource-Heavy Processes"
-    info "CPU:"
-    ps -eo pid,comm,%cpu,%mem --sort=-%cpu 2>/dev/null | head -11 | \
-        awk 'NR==1{printf "   %-8s %-20s %5s %5s\n",$1,$2,$3,$4; next}
-             {printf "   %-8s %-20s %5s %5s\n",$1,$2,$3,$4}'
 
-    info "Memory:"
+    info "By CPU:"
+    ps -eo pid,comm,%cpu,%mem --sort=-%cpu 2>/dev/null | head -11 | \
+        awk 'NR==1 { printf "   %-8s %-22s %5s %5s\n", $1,$2,$3,$4; next }
+                   { printf "   %-8s %-22s %5s %5s\n", $1,$2,$3,$4 }'
+
+    echo ""
+    info "By Memory:"
     ps -eo pid,comm,%cpu,%mem --sort=-%mem 2>/dev/null | head -6 | \
-        awk 'NR==1{printf "   %-8s %-20s %5s %5s\n",$1,$2,$3,$4; next}
-             {printf "   %-8s %-20s %5s %5s\n",$1,$2,$3,$4}'
+        awk 'NR==1 { printf "   %-8s %-22s %5s %5s\n", $1,$2,$3,$4; next }
+                   { printf "   %-8s %-22s %5s %5s\n", $1,$2,$3,$4 }'
 }
 
+# ── Clean ──────────────────────────────────────────────────────────────────────
 clean() {
     header "System Cleanup"
-    echo "  This will remove unused packages, old logs, and user cache files."
-    echo "  Your personal documents and app data are not affected."
+    echo "  Removes unused packages, old logs, and cache files."
+    echo "  Your personal files and app data are never touched."
     echo ""
     confirm "Proceed with cleanup?" || { info "Cleanup cancelled."; return 0; }
+    echo ""
 
-    local freed=0
-
-    # ── Package manager cleanup ──
-    if require_command apt; then
+    # ── Package managers ──
+    if require_command apt-get; then
         info "Cleaning APT packages..."
-        run_sudo apt-get autoremove -y -q && \
-        run_sudo apt-get clean -q && \
+        run_sudo apt-get autoremove -y -q 2>/dev/null && \
+        run_sudo apt-get clean -q 2>/dev/null && \
         success "APT cleaned."
     fi
 
     if require_command dnf; then
         info "Cleaning DNF packages..."
-        run_sudo dnf autoremove -y -q && success "DNF cleaned."
+        run_sudo dnf autoremove -y -q 2>/dev/null && success "DNF cleaned."
     fi
 
     if require_command pacman; then
-        info "Cleaning Pacman cache (keeping 1 version)..."
+        info "Cleaning Pacman cache..."
         if require_command paccache; then
-            run_sudo paccache -rk1 && success "Pacman cache trimmed."
+            run_sudo paccache -rk1 2>/dev/null && success "Pacman cache trimmed (kept 1 version)."
         else
-            run_sudo pacman -Sc --noconfirm && success "Pacman cache cleared."
+            run_sudo pacman -Sc --noconfirm 2>/dev/null && success "Pacman cache cleared."
         fi
     fi
 
     if require_command zypper; then
-        info "Cleaning zypper packages..."
-        run_sudo zypper clean -a && success "Zypper cleaned."
+        info "Cleaning Zypper packages..."
+        run_sudo zypper clean -a 2>/dev/null && success "Zypper cleaned."
     fi
 
-    # ── Flatpak / Snap orphans ──
+    # ── Flatpak / Snap ──
     if require_command flatpak; then
         info "Removing unused Flatpak runtimes..."
         flatpak uninstall --unused -y 2>/dev/null && success "Flatpak cleaned."
@@ -131,34 +129,34 @@ clean() {
 
     if require_command snap; then
         info "Removing old Snap revisions..."
-        snap list --all 2>/dev/null | awk '/disabled/{print $1, $3}' | \
+        snap list --all 2>/dev/null | awk '/disabled/ {print $1, $3}' | \
             while read -r snapname revision; do
                 run_sudo snap remove "$snapname" --revision="$revision" 2>/dev/null
             done
-        success "Snap old revisions removed."
+        success "Old Snap revisions removed."
     fi
 
-    # ── User thumbnail cache ──
+    # ── User caches ──
     if [[ -d "${HOME}/.cache/thumbnails" ]]; then
         info "Clearing thumbnail cache..."
         rm -rf "${HOME}/.cache/thumbnails"/* 2>/dev/null
         success "Thumbnail cache cleared."
     fi
 
-    # ── Browser caches (optional, user-owned only) ──
-    local cache_dirs=(
+    local browser_caches=(
         "${HOME}/.cache/google-chrome/Default/Cache"
         "${HOME}/.cache/chromium/Default/Cache"
         "${HOME}/.cache/mozilla/firefox"
     )
-    for d in "${cache_dirs[@]}"; do
+    for d in "${browser_caches[@]}"; do
         if [[ -d "$d" ]]; then
             info "Clearing $(basename "$(dirname "$d")") cache..."
             rm -rf "${d:?}"/* 2>/dev/null
+            success "Done."
         fi
     done
 
-    # ── User-owned /tmp files only ──
+    # ── Temp files (user-owned only) ──
     info "Removing your temp files from /tmp..."
     find /tmp -maxdepth 1 -user "$USER" -not -name "." \
         -exec rm -rf {} + 2>/dev/null || true
@@ -170,84 +168,109 @@ clean() {
         run_sudo journalctl --vacuum-time=7d 2>/dev/null && success "Journal trimmed."
     fi
 
+    echo ""
     success "Cleanup complete."
 }
 
+# ── Power toggle ───────────────────────────────────────────────────────────────
 boost() {
-    header "Performance Boost"
+    header "Power Profile Toggle"
 
-    local method=""
+    local current="" method=""
 
     if require_command powerprofilesctl; then
-        if powerprofilesctl set performance 2>/dev/null; then
-            method="powerprofilesctl"
-        fi
-    elif require_command tuned-adm; then
-        if run_sudo tuned-adm profile throughput-performance 2>/dev/null; then
-            method="tuned-adm"
-        fi
-    elif require_command cpupower; then
-        if run_sudo cpupower frequency-set -g performance 2>/dev/null; then
-            method="cpupower"
-        fi
-    elif [[ -f /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor ]]; then
-        local gov
-        gov=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || echo "unknown")
-        info "Current CPU governor: $gov"
-        if [[ "$gov" != "performance" ]]; then
-            warn "Cannot set governor automatically — try: sudo cpupower frequency-set -g performance"
+        current=$(powerprofilesctl get 2>/dev/null || echo "unknown")
+        info "Current profile: ${BOLD}${current}${RESET}"
+        if [[ "$current" == "performance" ]]; then
+            powerprofilesctl set power-saver 2>/dev/null && method="powerprofilesctl"
+            success "Switched to power-saver — less heat, better battery life."
         else
-            success "Already running in performance mode."
+            powerprofilesctl set performance 2>/dev/null && method="powerprofilesctl"
+            success "Switched to performance mode."
+            warn "Run 'fml boost' again to switch back to power-saver when done."
         fi
+
+    elif require_command tuned-adm; then
+        current=$(tuned-adm active 2>/dev/null | awk '{print $NF}' || echo "unknown")
+        info "Current profile: ${BOLD}${current}${RESET}"
+        if [[ "$current" == *"throughput"* || "$current" == *"performance"* ]]; then
+            run_sudo tuned-adm profile powersave 2>/dev/null && method="tuned-adm"
+            success "Switched to powersave mode."
+        else
+            run_sudo tuned-adm profile throughput-performance 2>/dev/null && method="tuned-adm"
+            success "Switched to performance mode."
+            warn "Run 'fml boost' again to switch back when done."
+        fi
+
+    elif require_command cpupower; then
+        current=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || echo "unknown")
+        info "Current governor: ${BOLD}${current}${RESET}"
+        if [[ "$current" == "performance" ]]; then
+            run_sudo cpupower frequency-set -g powersave 2>/dev/null && method="cpupower"
+            success "Switched to powersave mode."
+        else
+            run_sudo cpupower frequency-set -g performance 2>/dev/null && method="cpupower"
+            success "Switched to performance mode."
+            warn "Run 'fml boost' again to switch back when done."
+        fi
+
+    elif [[ -f /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor ]]; then
+        current=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || echo "unknown")
+        info "Current governor: ${BOLD}${current}${RESET}"
+        warn "No tool available to change it — install cpupower to enable toggling."
+        return 0
+
+    else
+        warn "No power profile control found on this system."
+        info "Your kernel likely manages CPU performance automatically."
         return 0
     fi
 
-    if [[ -n "$method" ]]; then
-        success "Performance mode enabled via $method."
-        warn "Remember to reset to 'balanced' or 'powersave' when on battery."
-    else
-        warn "No CPU performance control found on this system."
-        info "Your CPU likely manages performance automatically (modern kernels handle this well)."
+    if [[ -z "$method" ]]; then
+        error "Failed to switch power profile — try running with sudo."
+        return 1
     fi
 }
 
+# ── Health check ───────────────────────────────────────────────────────────────
 health() {
     header "System Health Check"
+    local issues=0
+    echo ""
 
     # Load
-    local load1 load5 ncpu score=0 issues=0
+    local load1 load5 ncpu load_int
     load1=$(awk '{print $1}' /proc/loadavg)
     load5=$(awk '{print $2}' /proc/loadavg)
     ncpu=$(nproc 2>/dev/null || echo 1)
-    local load_int
     load_int=$(echo "$load1" | awk '{printf "%.0f", $1}')
 
-    echo ""
-    printf "  %-20s %s\n" "Load avg (1m/5m):" "${load1} / ${load5}  (${ncpu} CPUs)"
+    printf "  %-22s %s\n" "Load avg (1m / 5m):" "${load1} / ${load5}  (${ncpu} CPUs)"
     if (( load_int > ncpu * 2 )); then
-        warn "Very high load — system may be under heavy stress."
+        warn "Very high load — system is under heavy stress."
         (( issues++ ))
     elif (( load_int > ncpu )); then
-        warn "Load above CPU count — may be slow."
+        warn "Load exceeds CPU count — may feel sluggish."
         (( issues++ ))
     else
-        success "Load looks healthy."
+        success "Load is healthy."
     fi
 
-    # Memory
+    # RAM
     local mem_used mem_total mem_pct
     mem_used=$(free | awk '/^Mem:/{print $3}')
     mem_total=$(free | awk '/^Mem:/{print $2}')
     if [[ -n "$mem_total" && "$mem_total" -gt 0 ]] 2>/dev/null; then
         mem_pct=$(awk "BEGIN{printf \"%.0f\", ${mem_used}/${mem_total}*100}")
-        printf "  %-20s %s%%\n" "RAM usage:" "$mem_pct"
+        printf "  %-22s %s%%\n" "RAM usage:" "$mem_pct"
         if (( mem_pct > 90 )); then
-            warn "RAM is very full — consider closing apps."
+            warn "RAM nearly full — close some apps or run 'fml clean'."
             (( issues++ ))
         elif (( mem_pct > 75 )); then
             warn "RAM usage is high."
+            (( issues++ ))
         else
-            success "Memory usage is healthy."
+            success "RAM usage is healthy."
         fi
     else
         warn "Could not read memory info."
@@ -257,14 +280,14 @@ health() {
     local disk_pct
     disk_pct=$(df / | awk 'NR==2{gsub(/%/,"",$5); print $5}')
     if [[ "$disk_pct" =~ ^[0-9]+$ ]]; then
-        printf "  %-20s %s%%\n" "Disk usage (/):" "$disk_pct"
+        printf "  %-22s %s%%\n" "Disk usage (/):" "$disk_pct"
         if (( disk_pct > 90 )); then
-            warn "Disk is nearly full — run 'fixmylaptop clean'."
+            warn "Disk nearly full — run 'fml clean' now."
             (( issues++ ))
         elif (( disk_pct > 75 )); then
-            warn "Disk usage is getting high."
+            warn "Disk usage is getting high — consider cleaning soon."
         else
-            success "Disk space looks fine."
+            success "Disk space is fine."
         fi
     else
         warn "Could not read disk usage."
@@ -277,67 +300,83 @@ health() {
     if [[ -n "$swap_total" && "$swap_total" -gt 0 ]] 2>/dev/null; then
         local swap_pct
         swap_pct=$(awk "BEGIN{printf \"%.0f\", ${swap_used}/${swap_total}*100}")
-        printf "  %-20s %s%%\n" "Swap usage:" "$swap_pct"
+        printf "  %-22s %s%%\n" "Swap usage:" "$swap_pct"
         if (( swap_pct > 50 )); then
-            warn "Swap is heavily used — system may be slow."
+            warn "Swap heavily used — system is likely slow due to low RAM."
             (( issues++ ))
+        else
+            success "Swap usage is fine."
         fi
     fi
 
     echo ""
     if (( issues == 0 )); then
         success "All checks passed — system looks healthy."
+    elif (( issues == 1 )); then
+        warn "1 issue found. Try 'fml clean' or 'fml boost' to help."
     else
-        warn "$issues issue(s) found. Run 'fixmylaptop clean' or 'fixmylaptop boost' to help."
+        warn "${issues} issues found. Try 'fml clean' or 'fml boost' to help."
     fi
 }
 
+# ── Usage ──────────────────────────────────────────────────────────────────────
 usage() {
     cat <<EOF
-${BOLD}Usage:${RESET} fixmylaptop [COMMAND]
 
-A lightweight Linux system maintenance tool.
+${BOLD}fml${RESET} — Fix My Linux v${VERSION}
+A lightweight maintenance tool for low-spec Linux machines.
+
+${BOLD}Usage:${RESET}
+  fml [COMMAND]
 
 ${BOLD}Commands:${RESET}
-  status    Show system load, memory, and disk
-  top       Show top CPU/memory processes
+  status    Show load, memory, and disk usage
+  top       Show top CPU and memory processes
   clean     Remove unused packages, caches, and temp files
-  boost     Enable performance CPU governor
+  boost     Toggle power-saver / performance CPU mode
   health    Run a health check with warnings
-  (none)    Launch interactive menu
+  (none)    Launch the interactive menu
 
 ${BOLD}Options:${RESET}
-  -h, --help       Show this help
-  -v, --version    Show version
+  -h, --help       Show this help message
+  -v, --version    Show version number
 
 ${BOLD}Examples:${RESET}
-  fixmylaptop              # Interactive menu
-  fixmylaptop health       # Quick health check
-  fixmylaptop clean        # Clean the system
+  fml                  Interactive menu
+  fml health           Quick health check
+  fml clean            Clean the system
+  fml boost            Toggle CPU power mode
 
-Report bugs at: https://github.com/Melangert/Fix-My-Laptop-FML-
+${BOLD}Environment:${RESET}
+  NO_COLOR=1           Disable color output
+
+Report bugs: https://github.com/Melangert/Fix-My-Laptop-FML-/issues
 EOF
 }
 
+# ── Menu ───────────────────────────────────────────────────────────────────────
 menu() {
     while true; do
         echo ""
-        echo -e "${BOLD}===== FixMyLaptop v${VERSION} =====${RESET}"
-        echo "  1) Status check"
-        echo "  2) Top processes"
-        echo "  3) Clean system"
-        echo "  4) Boost mode"
-        echo "  5) Health check"
-        echo "  6) Exit"
-        echo -e "${BOLD}===============================${RESET}"
-        read -rp "Choose option [1-6]: " opt
+        echo -e "${BOLD}  ╔══════════════════════════╗${RESET}"
+        echo -e "${BOLD}  ║   fml v${VERSION}            ║${RESET}"
+        echo -e "${BOLD}  ║   Fix My Linux           ║${RESET}"
+        echo -e "${BOLD}  ╠══════════════════════════╣${RESET}"
+        echo -e "  ║  ${CYAN}1${RESET}) Status check          ║"
+        echo -e "  ║  ${CYAN}2${RESET}) Top processes         ║"
+        echo -e "  ║  ${CYAN}3${RESET}) Clean system          ║"
+        echo -e "  ║  ${CYAN}4${RESET}) Toggle power mode     ║"
+        echo -e "  ║  ${CYAN}5${RESET}) Health check          ║"
+        echo -e "  ║  ${CYAN}6${RESET}) Exit                  ║"
+        echo -e "${BOLD}  ╚══════════════════════════╝${RESET}"
+        read -rp "  Choose [1-6]: " opt
         case "$opt" in
-            1) status;  pause ;;
-            2) topcpu;  pause ;;
-            3) clean;   pause ;;
-            4) boost;   pause ;;
-            5) health;  pause ;;
-            6) exit 0 ;;
+            1) status; pause ;;
+            2) topcpu; pause ;;
+            3) clean;  pause ;;
+            4) boost;  pause ;;
+            5) health; pause ;;
+            6) echo ""; exit 0 ;;
             *) warn "Invalid option — enter 1 to 6." ;;
         esac
     done
@@ -345,17 +384,17 @@ menu() {
 
 # ── Entry point ────────────────────────────────────────────────────────────────
 case "${1:-}" in
-    status)          status ;;
-    top)             topcpu ;;
-    clean)           clean ;;
-    boost)           boost ;;
-    health)          health ;;
-    -v|--version)    echo "$SCRIPT_NAME $VERSION" ;;
-    -h|--help)       usage ;;
-    "")              menu ;;
+    status)       status ;;
+    top)          topcpu ;;
+    clean)        clean ;;
+    boost)        boost ;;
+    health)       health ;;
+    -v|--version) echo "$SCRIPT_NAME $VERSION" ;;
+    -h|--help)    usage ;;
+    "")           menu ;;
     *)
         error "Unknown command: $1"
-        echo "Run 'fixmylaptop --help' for usage."
+        echo "  Run 'fml --help' for usage."
         exit 1
         ;;
 esac
