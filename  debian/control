@@ -1,0 +1,26 @@
+Source: fml
+Package: fml
+Section: admin
+Priority: optional
+Maintainer: Your Name kosikevinonu@gmail.com
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.6.2
+Homepage: https://github.com/Melangert/Fix-My-Laptop-FML-
+Rules-Requires-Root: no
+
+Package: fml
+Architecture: all
+Depends: ${misc:Depends}, bash (>= 4.0), procps, util-linux
+Recommends: sudo
+Suggests: cpupower | linux-cpupower, tuned
+Description: Lightweight Linux maintenance tool for low-spec systems
+ fixmylaptop is an interactive command-line tool for everyday Linux system
+ maintenance. It checks system health, cleans package caches and temp files,
+ shows top resource-heavy processes, and enables performance CPU modes.
+ .
+ It supports APT, DNF, Pacman, and Zypper package managers, and works on
+ most modern Linux distributions without additional dependencies.
+
+ Description: Lightweight Linux maintenance tool for low-spec systems
+ fml is designed for older and low-resource Linux machines. It has zero
+ dependencies beyond bash and uses no background processes or daemons.

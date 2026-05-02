@@ -1,0 +1,10 @@
+fixmylaptop (1.0.0-1) unstable; urgency=low
+
+  * Initial release.
+  * Interactive menu with status, clean, boost, health commands.
+  * Supports APT, DNF, Pacman, Zypper, Flatpak, Snap cleanup.
+  * Safe cleanup with confirmation prompt.
+
+ -- Kevin Melangert kosikevinonu@gmail.com  Fri, 01 May 2026 00:00:00 +0000
+
+ fml (1.0.0-1) unstable; urgency=low 
