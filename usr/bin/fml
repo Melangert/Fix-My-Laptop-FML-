@@ -354,21 +354,19 @@ Report bugs: https://github.com/Melangert/Fix-My-Laptop-FML-/issues
 EOF
 }
 
-# ── Menu ───────────────────────────────────────────────────────────────────────
-menu() {
+#menu() {
     while true; do
         echo ""
-        echo -e "${BOLD}  ╔══════════════════════════╗${RESET}"
-        echo -e "${BOLD}  ║   fml v${VERSION}            ║${RESET}"
-        echo -e "${BOLD}  ║   Fix My Linux           ║${RESET}"
-        echo -e "${BOLD}  ╠══════════════════════════╣${RESET}"
-        echo -e "  ║  ${CYAN}1${RESET}) Status check          ║"
-        echo -e "  ║  ${CYAN}2${RESET}) Top processes         ║"
-        echo -e "  ║  ${CYAN}3${RESET}) Clean system          ║"
-        echo -e "  ║  ${CYAN}4${RESET}) Toggle power mode     ║"
-        echo -e "  ║  ${CYAN}5${RESET}) Health check          ║"
-        echo -e "  ║  ${CYAN}6${RESET}) Exit                  ║"
-        echo -e "${BOLD}  ╚══════════════════════════╝${RESET}"
+        echo -e "${BOLD}  ===== fml v${VERSION} =====${RESET}"
+        echo -e "  ${BOLD}Fix My Linux${RESET}"
+        echo "  ========================="
+        echo "  1) Status check"
+        echo "  2) Top processes"
+        echo "  3) Clean system"
+        echo "  4) Toggle power mode"
+        echo "  5) Health check"
+        echo "  6) Exit"
+        echo "  ========================="
         read -rp "  Choose [1-6]: " opt
         case "$opt" in
             1) status; pause ;;
