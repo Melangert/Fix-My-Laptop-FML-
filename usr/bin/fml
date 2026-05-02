@@ -315,7 +315,7 @@ ${BOLD}Examples:${RESET}
   fixmylaptop health       # Quick health check
   fixmylaptop clean        # Clean the system
 
-Report bugs at: https://github.com/yourname/fixmylaptop
+Report bugs at: https://github.com/Melangert/Fix-My-Laptop-FML-
 EOF
 }
 
