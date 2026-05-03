@@ -1,4 +1,4 @@
-# fml — Fix My Linux
+# fml — Fix My Laptop
 
 A lightweight Linux system maintenance tool built for low-spec and older machines.
 
