@@ -1,16 +1,13 @@
-Source: fml
+Package: fml
+Version: 1.1.0-1
+Architecture: all
+Maintainer: Kevin Melangert <kosikevinonu@gmail.com>
+Installed-Size: 28
+Depends: bash (>= 4.0), procps.
+Recommends: sudo
 Section: admin
 Priority: optional
-Maintainer: Kevin Melangert <kosikevinonu@gmail.com>
-Build-Depends: debhelper-compat (= 13)
-Standards-Version: 4.6.2
 Homepage: https://github.com/Melangert/Fix-My-Laptop-FML-
-Rules-Requires-Root: no
-
-Package: fml
-Architecture: all
-Depends: ${misc:Depends}, bash (>= 4.0), procps.
-Recommends: sudo
 Description: Lightweight Linux maintenance tool for low-spec systems
  fml (Fix My Linux) is designed for older and low-resource Linux machines.
  It has zero dependencies beyond bash and uses no background processes.
