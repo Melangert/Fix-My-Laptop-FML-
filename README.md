@@ -4,7 +4,7 @@ A lightweight Linux system maintenance tool built for low-spec and older machine
 
 ## Install
 
-### From PPA (Ubuntu/Debian)
+### From PPA (Ubuntu/Debian) UNAVAILABLE
 ```bash
 sudo add-apt-repository ppa:melangert/fml
 sudo apt update
