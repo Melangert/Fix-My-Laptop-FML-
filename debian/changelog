@@ -1,6 +1,5 @@
 fml (1.1.0-1) unstable; urgency=low
 
-  * Renamed project from fixmylaptop to fml (Fix My Linux).
   * boost() is now a proper power profile toggle.
   * Improved menu and output formatting.
   * Fixed broken code outside boost() function.
@@ -14,3 +13,11 @@ fml (1.0.0-1) unstable; urgency=low
   * Safe cleanup with confirmation prompt.
 
  -- Kevin Melangert <kosikevinonu@gmail.com>  Thu, 30 Apr 2026 00:00:00 +0000
+fml (1.1.1-1) unstable; urgency=low
+
+  * Added thermal check (temps) function to monitor hardware temperatures.
+  * Integrated temps option into the main interactive menu.
+  * Fixed ANSI color rendering bug in the --help output.
+  * Moved main script to repository root for cleaner structure.
+
+ -- Kevin Melangert <kosikevinonu@gmail.com>  Sat, 23 May 2026 21:12:00 -0400

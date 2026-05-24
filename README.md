@@ -4,13 +4,6 @@ A lightweight Linux system maintenance tool built for low-spec and older machine
 
 ## Install
 
-### From PPA (Ubuntu/Debian) UNAVAILABLE
-```bash
-sudo add-apt-repository ppa:melangert/fml
-sudo apt update
-sudo apt install fml
-```
-
 ### Manual
 ```bash
 sudo curl -o /usr/local/bin/fml https://raw.githubusercontent.com/Melangert/Fix-My-Laptop-FML-/main/usr/bin/fml
@@ -26,6 +19,7 @@ fml top          # Top CPU and memory processes
 fml clean        # Remove unused packages and caches
 fml boost        # Toggle CPU power mode
 fml health       # Health check with warnings
+fml temps           Check hardware temperatures
 fml --help
 fml --version
 ```
