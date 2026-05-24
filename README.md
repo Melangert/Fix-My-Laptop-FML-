@@ -32,7 +32,7 @@ fml --version
 - **performance** — maximum CPU speed, useful for short intensive tasks
 
 Run `fml boost` once to switch to performance, run it again to switch back.
-Works with `powerprofilesctl`, `tuned-adm`, and `cpupower` — whichever is available on your system.
+Works with `powerprofilesctl`, `tuned-adm`, and `cpupower`.
 
 ## Cleanup
 
@@ -43,7 +43,7 @@ Works with `powerprofilesctl`, `tuned-adm`, and `cpupower` — whichever is avai
 - Your temp files from /tmp
 - System journal logs older than 7 days
 
-Always asks for confirmation before making any changes. Never touches your personal files or documents.
+Always asks for confirmation before making any changes. Never touch your personal files or documents.
 
 ## Supported package managers
 
@@ -58,8 +58,8 @@ Always asks for confirmation before making any changes. Never touches your perso
 
 - bash 4.0+
 - procps (`free`, `ps`)
-- Nothing else — no Python, no Node, no heavy dependencies
 
+  
 ## License
 
 MIT — Kevin Melangert
