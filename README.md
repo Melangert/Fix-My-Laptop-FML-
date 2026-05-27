@@ -2,6 +2,8 @@
 
 A lightweight Linux system maintenance tool built for low-spec and older machines.
 
+![fml screenshot](fml.png)
+
 ## Install
 
 ### Manual
