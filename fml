@@ -173,8 +173,8 @@ clean() {
         (( browser_mb += bm ))
     done
 
-tmp_mb=$(find /tmp -maxdepth 1 -user "$USER" -not -name "." \
-    -exec du -sm {} + 2>/dev/null | awk '{s+=$1}END{print s+0}' | tr -d '\n')
+    tmp_mb=$(find /tmp -maxdepth 1 -user "$USER" -not -name "." \
+        -exec du -sm {} + 2>/dev/null | awk '{s+=$1}END{print s+0}' | tr -d '\n')
 
     if require_command journalctl; then
         journal_mb=$(dir_size_mb /var/log/journal)
