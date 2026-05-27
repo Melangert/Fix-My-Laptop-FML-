@@ -1,12 +1,12 @@
 #!/bin/bash
-# fml — Fix My Laptop
+# fml — Fix My Linux
 # A lightweight system maintenance tool for low-spec Linux machines
 # https://github.com/Melangert/Fix-My-Laptop-FML-
 # License: MIT
 
 set -uo pipefail
 
-VERSION="1.1.1"
+VERSION="1.2.0"
 SCRIPT_NAME="fml"
 
 ## ── Color support ──────────────────────────────────────────────────────────────
@@ -47,6 +47,30 @@ confirm() {
     local answer
     read -rp "$(echo -e "${YELLOW}?${RESET}  ${prompt} [y/N] ")" answer
     [[ "$answer" =~ ^[Yy]$ ]]
+}
+
+# ── Shared metrics (used by health, fix, suggest) ──────────────────────────────
+gather_metrics() {
+    # Just math, no printing — other functions react to these values
+    local mem_used mem_total swap_used swap_total
+
+    METRIC_LOAD1=$(awk '{print $1}' /proc/loadavg)
+    METRIC_NCPU=$(nproc 2>/dev/null || echo 1)
+    METRIC_LOAD_INT=$(echo "$METRIC_LOAD1" | awk '{printf "%.0f", $1}')
+
+    mem_used=$(free | awk '/^Mem:/{print $3}')
+    mem_total=$(free | awk '/^Mem:/{print $2}')
+    METRIC_MEM_PCT=$(awk "BEGIN{printf \"%.0f\", ${mem_used}/${mem_total}*100}")
+
+    METRIC_DISK_PCT=$(df / | awk 'NR==2{gsub(/%/,"",$5); print $5}')
+
+    swap_used=$(free | awk '/^Swap:/{print $3}')
+    swap_total=$(free | awk '/^Swap:/{print $2}')
+    if [[ -n "$swap_total" && "$swap_total" -gt 0 ]]; then
+        METRIC_SWAP_PCT=$(awk "BEGIN{printf \"%.0f\", ${swap_used}/${swap_total}*100}")
+    else
+        METRIC_SWAP_PCT=0
+    fi
 }
 
 # ── Status ─────────────────────────────────────────────────────────────────────
@@ -189,7 +213,7 @@ clean() {
         return 0
     fi
 
-    # ── Real cleanup (unchanged logic) ──
+    # ── Real cleanup ──
     confirm "Proceed with cleanup?" || { info "Cleanup cancelled."; return 0; }
     echo ""
 
@@ -320,120 +344,16 @@ boost() {
         return 1
     fi
 }
-# ── Shared metrics (used by health + fix) ─────────────────────────────────────
-gather_metrics() {
-    # Just 
-    local mem_used mem_total swap_used swap_total
 
-    METRIC_LOAD1=$(awk '{print $1}' /proc/loadavg)
-    METRIC_NCPU=$(nproc 2>/dev/null || echo 1)
-    # Integer version of load for comparisons like (( load_int > ncpu ))
-    METRIC_LOAD_INT=$(echo "$METRIC_LOAD1" | awk '{printf "%.0f", $1}')
-
-    mem_used=$(free | awk '/^Mem:/{print $3}')
-    mem_total=$(free | awk '/^Mem:/{print $2}')
-    METRIC_MEM_PCT=$(awk "BEGIN{printf \"%.0f\", ${mem_used}/${mem_total}*100}")
-
-    METRIC_DISK_PCT=$(df / | awk 'NR==2{gsub(/%/,"",$5); print $5}')
-
-    swap_used=$(free | awk '/^Swap:/{print $3}')
-    swap_total=$(free | awk '/^Swap:/{print $2}')
-    # Swap might not exist — default to 0 if total is 0
-    if [[ -n "$swap_total" && "$swap_total" -gt 0 ]]; then
-        METRIC_SWAP_PCT=$(awk "BEGIN{printf \"%.0f\", ${swap_used}/${swap_total}*100}")
-    else
-        METRIC_SWAP_PCT=0
-    fi
-}
-
-# ── Auto-fix ───────────────────────────────────────────────────────────────────
-fix() {
-    header "Auto-Fix"
-    echo "  Checks your system and offers to fix each problem found."
-    echo ""
-
-    # Gather all metrics first into METRIC_ variables
-    gather_metrics
-
-    local fixed=0
-    local skipped=0
-
-    # ── Check 1: High RAM ──
-    # If RAM over 85%, offer to run clean
-    if (( METRIC_MEM_PCT > 85 )); then
-        warn "RAM usage is ${METRIC_MEM_PCT}% — that's high."
-        info "Suggested fix: run cleanup to free cache and temp files."
-        if confirm "Run cleanup now?"; then
-            clean
-            (( fixed++ ))
-        else
-            (( skipped++ ))
-        fi
-        echo ""
-    fi
-
-    # ── Check 2: High disk ──
-    # If disk over 85%, offer to run clean
-    if (( METRIC_DISK_PCT > 85 )); then
-        warn "Disk usage is ${METRIC_DISK_PCT}% — getting full."
-        info "Suggested fix: run cleanup to recover disk space."
-        if confirm "Run cleanup now?"; then
-            clean
-            (( fixed++ ))
-        else
-            (( skipped++ ))
-        fi
-        echo ""
-    fi
-
-    # ── Check 3: High load ──
-    # If load exceeds 2x CPU count, offer to switch to power-saver
-    # to reduce background pressure
-    if (( METRIC_LOAD_INT > METRIC_NCPU * 2 )); then
-        warn "Load is ${METRIC_LOAD1} on ${METRIC_NCPU} CPUs — system is under heavy stress."
-        info "Suggested fix: toggle power profile to reduce background CPU pressure."
-        if confirm "Toggle power mode now?"; then
-            boost
-            (( fixed++ ))
-        else
-            (( skipped++ ))
-        fi
-        echo ""
-    fi
-
-    # ── Check 4: High swap ──
-    # Swap over 50% means RAM is spilling over — clean is the best we can do
-    if (( METRIC_SWAP_PCT > 50 )); then
-        warn "Swap usage is ${METRIC_SWAP_PCT}% — RAM is likely exhausted."
-        info "Suggested fix: run cleanup to free RAM and reduce swap pressure."
-        if confirm "Run cleanup now?"; then
-            clean
-            (( fixed++ ))
-        else
-            (( skipped++ ))
-        fi
-        echo ""
-    fi
-
-    # ── Summary ──
-    if (( fixed == 0 && skipped == 0 )); then
-        success "System looks healthy — no fixes needed."
-    else
-        (( fixed > 0 ))   && success "${fixed} fix(es) applied."
-        (( skipped > 0 )) && info "${skipped} fix(es) skipped."
-    fi
-}
 # ── Health check ───────────────────────────────────────────────────────────────
 health() {
-    header "System Health check"
+    header "System Health Check"
     echo ""
 
-    # Use shared metrics
-     gather_metrics
+    gather_metrics
 
     local issues=0
 
-    # Load
     printf "  %-22s %s\n" "Load avg (1m):" "${METRIC_LOAD1}  (${METRIC_NCPU} CPUs)"
     if (( METRIC_LOAD_INT > METRIC_NCPU * 2 )); then
         warn "Very high load — system is under heavy stress."
@@ -445,7 +365,6 @@ health() {
         success "Load is healthy."
     fi
 
-    # RAM
     printf "  %-22s %s%%\n" "RAM usage:" "$METRIC_MEM_PCT"
     if (( METRIC_MEM_PCT > 90 )); then
         warn "RAM nearly full — close some apps or run 'fml clean'."
@@ -457,7 +376,6 @@ health() {
         success "RAM usage is healthy."
     fi
 
-    # Disk
     printf "  %-22s %s%%\n" "Disk usage (/):" "$METRIC_DISK_PCT"
     if (( METRIC_DISK_PCT > 90 )); then
         warn "Disk nearly full — run 'fml clean' now."
@@ -469,7 +387,6 @@ health() {
         success "Disk space is fine."
     fi
 
-    # Swap
     printf "  %-22s %s%%\n" "Swap usage:" "$METRIC_SWAP_PCT"
     if (( METRIC_SWAP_PCT > 50 )); then
         warn "Swap heavily used — system is likely slow due to low RAM."
@@ -488,17 +405,82 @@ health() {
     fi
 }
 
+# ── Auto-fix ───────────────────────────────────────────────────────────────────
+fix() {
+    header "Auto-Fix"
+    echo "  Checks your system and offers to fix each problem found."
+    echo ""
+
+    gather_metrics
+
+    local fixed=0
+    local skipped=0
+
+    if (( METRIC_MEM_PCT > 85 )); then
+        warn "RAM usage is ${METRIC_MEM_PCT}% — that's high."
+        info "Suggested fix: run cleanup to free cache and temp files."
+        if confirm "Run cleanup now?"; then
+            clean
+            (( fixed++ ))
+        else
+            (( skipped++ ))
+        fi
+        echo ""
+    fi
+
+    if (( METRIC_DISK_PCT > 85 )); then
+        warn "Disk usage is ${METRIC_DISK_PCT}% — getting full."
+        info "Suggested fix: run cleanup to recover disk space."
+        if confirm "Run cleanup now?"; then
+            clean
+            (( fixed++ ))
+        else
+            (( skipped++ ))
+        fi
+        echo ""
+    fi
+
+    if (( METRIC_LOAD_INT > METRIC_NCPU * 2 )); then
+        warn "Load is ${METRIC_LOAD1} on ${METRIC_NCPU} CPUs — system is under heavy stress."
+        info "Suggested fix: toggle power profile to reduce background CPU pressure."
+        if confirm "Toggle power mode now?"; then
+            boost
+            (( fixed++ ))
+        else
+            (( skipped++ ))
+        fi
+        echo ""
+    fi
+
+    if (( METRIC_SWAP_PCT > 50 )); then
+        warn "Swap usage is ${METRIC_SWAP_PCT}% — RAM is likely exhausted."
+        info "Suggested fix: run cleanup to free RAM and reduce swap pressure."
+        if confirm "Run cleanup now?"; then
+            clean
+            (( fixed++ ))
+        else
+            (( skipped++ ))
+        fi
+        echo ""
+    fi
+
+    if (( fixed == 0 && skipped == 0 )); then
+        success "System looks healthy — no fixes needed."
+    else
+        (( fixed > 0 ))   && success "${fixed} fix(es) applied."
+        (( skipped > 0 )) && info "${skipped} fix(es) skipped."
+    fi
+}
+
 # ── Smart recommendations ──────────────────────────────────────────────────────
 suggest() {
     header "System Suggestions"
     echo ""
 
-    # Reuse shared metrics if already gathered, otherwise gather fresg
     [[ -z "${METRIC_MEM_PCT:-}" ]] && gather_metrics
 
     local count=0
 
-    # RAM suggestions
     if (( METRIC_MEM_PCT > 85 )); then
         warn "RAM at ${METRIC_MEM_PCT}% — run 'fml clean' or close heavy apps like browsers."
         (( count++ ))
@@ -507,7 +489,6 @@ suggest() {
         (( count++ ))
     fi
 
-    # Disk suggestions
     if (( METRIC_DISK_PCT > 85 )); then
         warn "Disk at ${METRIC_DISK_PCT}% — run 'fml clean' to recover space."
         (( count++ ))
@@ -516,7 +497,6 @@ suggest() {
         (( count++ ))
     fi
 
-    # Load suggestions
     if (( METRIC_LOAD_INT > METRIC_NCPU * 2 )); then
         warn "Load is very high — check 'fml top' to find what's eating CPU."
         (( count++ ))
@@ -525,13 +505,11 @@ suggest() {
         (( count++ ))
     fi
 
-    # Swap suggestions
     if (( METRIC_SWAP_PCT > 50 )); then
         warn "Swap at ${METRIC_SWAP_PCT}% — RAM is under pressure, try 'fml clean'."
         (( count++ ))
     fi
 
-    # CPU governor suggestion — performance mode on battery is wasteful
     local governor
     governor=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || echo "")
     if [[ "$governor" == "performance" ]]; then
@@ -546,21 +524,32 @@ suggest() {
         info "${count} suggestion(s) above. Run 'fml fix' to address them automatically."
     fi
 }
+
 # ── Temps check ───────────────────────────────────────────────────────────────
 temps() {
-    header "Thermal Status" 
-    
-    # Added space after [ and before ], and added 'then'
+    header "Thermal Status"
+
     if [[ -d /sys/class/thermal/thermal_zone0 ]]; then
         for zone in /sys/class/thermal/thermal_zone*; do
             temp=$(cat "$zone/temp" 2>/dev/null)
-            # Convert millidegrees Celsius to degrees
-            # Using basename to get the zone name
             printf "  %-15s %d°C\n" "$(cat "$zone/type" 2>/dev/null)" "$((temp / 1000))"
         done
     else
         warn "No thermal sensors found."
     fi
+}
+
+# ── Live monitor ───────────────────────────────────────────────────────────────
+monitor() {
+    trap 'echo ""; info "Exiting monitor..."; exit 0' INT
+    while true; do
+        clear
+        echo -e "${BOLD}  fml monitor — press Ctrl+C to exit${RESET}"
+        echo -e "  Last updated: $(date)"
+        status
+        suggest
+        sleep 2
+    done
 }
 
 # ── Usage ──────────────────────────────────────────────────────────────────────
@@ -579,100 +568,88 @@ ${BOLD}Commands:${RESET}
   boost     Toggle power-saver / performance CPU mode
   health    Run a health check with warnings
   temps     Show hardware temperatures
-  fix       Offers fixes for problems found
-  suggest   System suggestions
+  fix       Auto-detect problems and offer to fix them
+  suggest   Show smart recommendations based on system state
+  monitor   Live system monitor — refreshes every 2 seconds
   (none)    Launch the interactive menu
 
 ${BOLD}Options:${RESET}
   -h, --help       Show this help message
   -v, --version    Show version number
 
+${BOLD}Flags:${RESET}
+  fml clean --dry-run    Preview what cleanup would remove
+
 ${BOLD}Examples:${RESET}
-  fml                  Interactive menu
-  fml health           Quick health check
-  fml clean            Clean the system
-  fml boost            Toggle CPU power mode
-  fml temps           Check hardware temperatures
-  fml fix             Checks your system and offers to fix each problem found
-  fml suggest         System suggestions.
+  fml                    Interactive menu
+  fml health             Quick health check
+  fml clean              Clean the system
+  fml clean --dry-run    Preview cleanup without changing anything
+  fml fix                Auto-fix detected problems
+  fml suggest            Show system recommendations
+  fml monitor            Live system monitor
+  fml boost              Toggle CPU power mode
+  fml temps              Check hardware temperatures
+
 ${BOLD}Environment:${RESET}
-  NO_COLOR=1           Disable color output
+  NO_COLOR=1             Disable color output
 
 Report bugs: https://github.com/Melangert/Fix-My-Laptop-FML-/issues
 "
 }
 
+# ── Menu ───────────────────────────────────────────────────────────────────────
 menu() {
-while true; do
-monitor() {
-    trap 'echo ""; info "Exiting monitor..."; exit 0' INT
-   while true; do
-   clear
-   echo "Last updated: $(date)" 
-    status
-    suggest
-    sleep 2
-done
-}
-    echo ""
-    echo -e "${BOLD}  ===== fml v${VERSION} =====${RESET}"
-    echo -e "  ${BOLD}Fix My Laptop${RESET}"
-    echo "  ========================="
-    echo "  1) Status check"
-    echo "  2) Top processes"
-    echo "  3) Clean system"
-    echo "  4) Toggle power mode"
-    echo "  5) Health check"
-    echo "  6) Thermal check"
-    echo "  7) Fix"
-    echo "  8) Suggestions"
-    echo "  9) Exit"
-    echo "  ========================="
-    read -rp "  Choose [1-9]: " opt
-    case "$opt" in
-        1) status; pause ;;
-        2) topcpu; pause ;;
-        3) clean;  pause ;;
-        4) boost;  pause ;;
-        5) health; pause ;;
-        6) temps;  pause ;;
-        7) fix;    pause ;;
-        8) suggest; pause ;;
-
-        9) echo ""; exit 0 ;;
-        *) warn "Invalid option — enter 1 to 9." ;;
-    esac
-done
+    while true; do
+        echo ""
+        echo -e "${BOLD}  ===== fml v${VERSION} =====${RESET}"
+        echo -e "  ${BOLD}Fix My Laptop${RESET}"
+        echo "  ========================="
+        echo "  1) Status check"
+        echo "  2) Top processes"
+        echo "  3) Clean system"
+        echo "  4) Toggle power mode"
+        echo "  5) Health check"
+        echo "  6) Thermal check"
+        echo "  7) Auto-fix"
+        echo "  8) Suggestions"
+        echo "  9) Live monitor"
+        echo "  10) Exit"
+        echo "  ========================="
+        read -rp "  Choose [1-10]: " opt
+        case "$opt" in
+            1)  status;  pause ;;
+            2)  topcpu;  pause ;;
+            3)  clean;   pause ;;
+            4)  boost;   pause ;;
+            5)  health;  pause ;;
+            6)  temps;   pause ;;
+            7)  fix;     pause ;;
+            8)  suggest; pause ;;
+            9)  monitor ;;
+            10) echo ""; exit 0 ;;
+            *)  warn "Invalid option — enter 1 to 10." ;;
+        esac
+    done
 }
 
 # ── Entry point ────────────────────────────────────────────────────────────────
 case "${1:-}" in
-
-    status)       status ;;
-    top)          topcpu ;;
-    clean)        clean ;;
-    boost)        boost ;;
-    health)       health ;;
-    temps)        temps ;;
-    fix)          fix ;;
+    status)        status ;;
+    top)           topcpu ;;
+    clean)         clean "${2:-}" ;;
+    boost)         boost ;;
+    health)        health ;;
+    temps)         temps ;;
+    fix)           fix ;;
     suggest)       suggest ;;
-    -v|--version) echo "$SCRIPT_NAME $VERSION" ;;
-    -h|--help)    usage ;;
-    "")           menu ;;
+    monitor)       monitor ;;
+    -v|--version)  echo "$SCRIPT_NAME $VERSION" ;;
+    -h|--help)     usage ;;
+    "")            menu ;;
     *)
         error "Unknown command: $1"
         echo "  Run 'fml --help' for usage."
         exit 1
         ;;
 esac
-
-monitor() {
-    trap 'echo ""; info "Exiting monitor..."; exit 0' INT
-   while true; do
-   clear
-   echo "Last updated: $(date)" 
-    status
-    suggest
-    sleep 2
-done
-}
