@@ -22,7 +22,10 @@ fml health       # Health check with warnings
 fml temps           Check hardware temperatures
 fml --help
 fml --version
-```
+fml fix                  # auto fix problems that are detected
+fml suggest              # get recommendations base off your system
+fml monitor              # live refreshing system view 
+fml clean --dry-run      # preview cleanup without changing anything
 
 ## Power Mode Toggle
 
@@ -34,7 +37,7 @@ fml --version
 Run `fml boost` once to switch to performance, run it again to switch back.
 Works with `powerprofilesctl`, `tuned-adm`, and `cpupower` — whichever is available on your system.
 
-## Cleanup
+## Cleanup 
 
 `fml clean` safely removes:
 - Unused packages (apt/dnf/pacman/zypper)
@@ -58,7 +61,6 @@ Always asks for confirmation before making any changes. Never touches your perso
 
 - bash 4.0+
 - procps (`free`, `ps`)
-- Nothing else — no Python, no Node, no heavy dependencies
 
 ## License
 
