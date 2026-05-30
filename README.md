@@ -5,13 +5,18 @@ A lightweight Linux system maintenance tool built for low-spec and older machine
 ![fml screenshot](fml.png)
 
 ## Install
-
-### Manual
 ```bash
 
 sudo curl -o /usr/local/bin/fml https://raw.githubusercontent.com/Melangert/Fix-My-Laptop-FML-/main/usr/bin/fml
 sudo chmod +x /usr/local/bin/fml
 ```
+
+## Requirements
+-Linux distro
+-Bash
+
+
+
 
 ## How to use
 
