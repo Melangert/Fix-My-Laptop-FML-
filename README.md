@@ -39,22 +39,22 @@ fml clean --dry-run      # preview cleanup without changing anything
 
 `fml boost` toggles between **power-saver** and **performance** mode.
 
-- **power-saver** — less heat, better battery life, recommended for everyday use on low-spec machines
-- **performance** — maximum CPU speed, useful for short intensive tasks
+- **power-saver** — decreases performance but preserves battery health
+- **performance** — maximum CPU speed, useful for shorter tasks.
 
 Run `fml boost` once to switch to performance and run  again to switch back.
 Works with `powerprofilesctl` `tuned-adm`   and `cpupower`.
 
 ## Cleanup 
 
-`fml clean` safely removes:
+`fml clean` removes:
 - Unused packages 
 - Unused flatpak runtimes and oldsnap revisions
 - Thumbnail and browser caches
 - Your temp files from /tmp
-- System journal logs older than 7 days
+- System journal logs older than a week
 
-Always asks for confirmation before making any changes. Never touch your personal files or documents.
+Always asks for confirmation before making any changes fml will  never touch your personal files or documents.
 
 ## Supported package managers
 
@@ -64,11 +64,6 @@ Always asks for confirmation before making any changes. Never touch your persona
 | dnf     | Fedora, RHEL, CentOS Stream |
 | pacman  | Arch, Manjaro, EndeavourOS |
 | zypper  | openSUSE |
-
-## Requirements
-
-- bash 4.0+
-- procps (`free`, `ps`)
 
   
 ## License
