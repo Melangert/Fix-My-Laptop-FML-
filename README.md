@@ -1,6 +1,6 @@
 # fml — Fix My Laptop
 
-A lightweight Linux system maintenance tool built for low-spec and older machines.
+A lightweight Linux system maintenance tool built for low-spec and older machines, doesnt magically imporve performance but it would be good to run it every once in a while if you feel your system slowing down.
 
 ![fml screenshot](fml.png)
 
@@ -8,11 +8,12 @@ A lightweight Linux system maintenance tool built for low-spec and older machine
 
 ### Manual
 ```bash
+
 sudo curl -o /usr/local/bin/fml https://raw.githubusercontent.com/Melangert/Fix-My-Laptop-FML-/main/usr/bin/fml
 sudo chmod +x /usr/local/bin/fml
 ```
 
-## Usage
+## How to use
 
 ```bash
 fml              # Interactive menu
@@ -24,9 +25,9 @@ fml health       # Health check with warnings
 fml temps           Check hardware temperatures
 fml --help
 fml --version
-fml fix                  # auto fix problems that are detected
+fml fix                # auto fix problems that are detected
 fml suggest              # get recommendations base off your system
-fml monitor              # live refreshing system view 
+fml monitor            # live refreshing system view 
 fml clean --dry-run      # preview cleanup without changing anything
 
 ## Power Mode Toggle
@@ -36,14 +37,14 @@ fml clean --dry-run      # preview cleanup without changing anything
 - **power-saver** — less heat, better battery life, recommended for everyday use on low-spec machines
 - **performance** — maximum CPU speed, useful for short intensive tasks
 
-Run `fml boost` once to switch to performance, run it again to switch back.
-Works with `powerprofilesctl`, `tuned-adm`, and `cpupower`.
+Run `fml boost` once to switch to performance and run  again to switch back.
+Works with `powerprofilesctl` `tuned-adm`   and `cpupower`.
 
 ## Cleanup 
 
 `fml clean` safely removes:
-- Unused packages (apt/dnf/pacman/zypper)
-- Unused Flatpak runtimes and old Snap revisions
+- Unused packages 
+- Unused flatpak runtimes and oldsnap revisions
 - Thumbnail and browser caches
 - Your temp files from /tmp
 - System journal logs older than 7 days
