@@ -9,7 +9,7 @@ set -uo pipefail
 VERSION="1.2.0"
 SCRIPT_NAME="fml"
 
-## ── Color support ──────────────────────────────────────────────────────────────
+## ---- color support -----------------------------------------
 if [[ -t 1 ]] && [[ "${NO_COLOR:-}" == "" ]]; then
     RED=$'\033[0;31m'; YELLOW=$'\033[1;33m'; GREEN=$'\033[0;32m'
     CYAN=$'\033[0;36m'; BOLD=$'\033[1m'; RESET=$'\033[0m'
@@ -17,7 +17,7 @@ else
     RED=''; YELLOW=''; GREEN=''; CYAN=''; BOLD=''; RESET=''
 fi
 
-# ── Helpers ────────────────────────────────────────────────────────────────────
+# ------ Helpers -----------------------------
 info()    { echo -e "${CYAN}→${RESET} $*"; }
 success() { echo -e "${GREEN}✔${RESET} $*"; }
 warn()    { echo -e "${YELLOW}⚠${RESET}  $*"; }
@@ -49,7 +49,7 @@ confirm() {
     [[ "$answer" =~ ^[Yy]$ ]]
 }
 
-# ── Shared metrics (used by health, fix, suggest) ──────────────────────────────
+# ----- shared metrics-----------
 gather_metrics() {
     # Just math, no printing — other functions react to these values
     local mem_used mem_total swap_used swap_total
@@ -73,7 +73,7 @@ gather_metrics() {
     fi
 }
 
-# ── Status ─────────────────────────────────────────────────────────────────────
+# ----Status -----------------------------------------------------------------------------------
 status() {
     header "System Status"
 
@@ -93,7 +93,7 @@ status() {
     uptime -p 2>/dev/null || uptime
 }
 
-# ── Top processes ──────────────────────────────────────────────────────────────
+# ---- Top processes -----------------------------------------
 topcpu() {
     header "Top Resource-Heavy Processes"
 
@@ -109,7 +109,7 @@ topcpu() {
                    { printf "   %-8s %-22s %5s %5s\n", $1,$2,$3,$4 }'
 }
 
-# ── Clean ──────────────────────────────────────────────────────────────────────
+# ===== Clean--------------------------------------------------------------
 clean() {
     local dry_run=false
     [[ "${1:-}" == "--dry-run" ]] && dry_run=true
@@ -288,7 +288,7 @@ tmp_mb=$(
     success "Cleanup complete."
 }
 
-# ── Power toggle ───────────────────────────────────────────────────────────────
+# -------Power toggle -----------------------------------------------
 boost() {
     header "Power Profile Toggle"
 
@@ -348,7 +348,7 @@ boost() {
     fi
 }
 
-# ── Health check ───────────────────────────────────────────────────────────────
+# ------ Health check ----------------------------------------
 health() {
     header "System Health Check"
     echo ""
@@ -408,7 +408,7 @@ health() {
     fi
 }
 
-# ── Auto-fix ───────────────────────────────────────────────────────────────────
+# -- Autofix ----------------------------
 fix() {
     header "Auto-Fix"
     echo "  Checks your system and offers to fix each problem found."
@@ -475,7 +475,7 @@ fix() {
     fi
 }
 
-# ── Smart recommendations ──────────────────────────────────────────────────────
+# ---- Smart recommendations ------------------------------------------------
 suggest() {
     header "System Suggestions"
     echo ""
@@ -528,7 +528,7 @@ suggest() {
     fi
 }
 
-# ── Temps check ───────────────────────────────────────────────────────────────
+# --- Temps check ---------------------------------------------------------------------------
 temps() {
     header "Thermal Status"
 
@@ -542,7 +542,7 @@ temps() {
     fi
 }
 
-# ── Live monitor ───────────────────────────────────────────────────────────────
+# ── Live monitor--------------------------------------------
 monitor() {
     trap 'echo ""; info "Exiting monitor..."; exit 0' INT
     while true; do
@@ -555,7 +555,7 @@ monitor() {
     done
 }
 
-# ── Usage ──────────────────────────────────────────────────────────────────────
+# ----Usage ─----------------------------------------------------
 usage() {
     echo -e "
 ${BOLD}fml${RESET} — Fix My Linux v${VERSION}
@@ -601,7 +601,7 @@ Report bugs: https://github.com/Melangert/Fix-My-Laptop-FML-/issues
 "
 }
 
-# ── Menu ───────────────────────────────────────────────────────────────────────
+# ---- Menu ----------------------------------------------------
 menu() {
     while true; do
         echo ""
@@ -636,7 +636,7 @@ menu() {
     done
 }
 
-# ── Entry point ────────────────────────────────────────────────────────────────
+# ----Entry point------------------------------------------
 case "${1:-}" in
     status)        status ;;
     top)           topcpu ;;
