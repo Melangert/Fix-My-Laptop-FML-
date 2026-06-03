@@ -69,8 +69,8 @@ Always asks for confirmation before making any changes fml will  never touch you
 ## License
 
 MIT — Kevin Melangert
-
+```
 
 
 ## Credits
-us
+Used AI to deebug clean function and add temps and health.
