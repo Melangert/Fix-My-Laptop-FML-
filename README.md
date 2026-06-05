@@ -23,18 +23,9 @@ sudo install -m 755 fml /usr/local/bin/fml
 
 
 ## Requirements
--Linux distro
+-any supported Linux distribution
 -Bash
 
-
-
-
-## How to use
-
-
-Do:
-
-```markdown
 ## How to use
 
 Run `fml` to open the interactive menu.
@@ -53,7 +44,7 @@ Run `fml` to open the interactive menu.
 
 Example:
 
-```bash
+
 fml status
 fml clean --dry-run
 ## Power Mode Toggle
