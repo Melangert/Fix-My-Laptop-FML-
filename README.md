@@ -31,7 +31,7 @@ sudo install -m 755 fml /usr/local/bin/fml
 
 ## How to use
 
-'''bash
+```bash
 fml              # Interactive menu
 fml status       # Show load, memory, and disk
 fml top          # Top CPU and memory processes
@@ -45,7 +45,7 @@ fml fix                # auto fix problems that are detected
 fml suggest              # get recommendations base off your system
 fml monitor            # live refreshing system view 
 fml clean --dry-run      # preview cleanup without changing anything
-'''
+```bash
 ## Power Mode Toggle
 
 `fml boost` toggles between **power-saver** and **performance** mode.
