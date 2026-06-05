@@ -45,7 +45,7 @@ fml fix                # auto fix problems that are detected
 fml suggest              # get recommendations base off your system
 fml monitor            # live refreshing system view 
 fml clean --dry-run      # preview cleanup without changing anything
-```bash
+```
 ## Power Mode Toggle
 
 `fml boost` toggles between **power-saver** and **performance** mode.
