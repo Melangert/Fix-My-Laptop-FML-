@@ -31,21 +31,31 @@ sudo install -m 755 fml /usr/local/bin/fml
 
 ## How to use
 
+
+Do:
+
+```markdown
+## How to use
+
+Run `fml` to open the interactive menu.
+
+### Commands
+
+- `fml status` — Show CPU load, memory usage, and disk usage.
+- `fml top` — Display the highest CPU and memory consuming processes.
+- `fml clean` — Remove unused packages and caches.
+- `fml boost` — Toggle between performance and power-saving modes.
+- `fml health` — Run a system health check.
+- `fml temps` — Display hardware temperatures.
+- `fml fix` — Attempt to fix detected issues automatically.
+- `fml suggest` — Show recommendations based on your system.
+- `fml monitor` — Live system monitoring view.
+
+Example:
+
 ```bash
-fml              # Interactive menu
-fml status       # Show load, memory, and disk
-fml top          # Top CPU and memory processes
-fml clean        # Remove unused packages and caches
-fml boost        # Toggle CPU power mode
-fml health       # Health check with warnings
-fml temps           Check hardware temperatures
-fml --help
-fml --version
-fml fix                # auto fix problems that are detected
-fml suggest              # get recommendations base off your system
-fml monitor            # live refreshing system view 
-fml clean --dry-run      # preview cleanup without changing anything
-```
+fml status
+fml clean --dry-run
 ## Power Mode Toggle
 
 `fml boost` toggles between power-saverand performancemode.
