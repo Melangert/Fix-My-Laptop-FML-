@@ -48,12 +48,12 @@ fml clean --dry-run      # preview cleanup without changing anything
 ```
 ## Power Mode Toggle
 
-`fml boost` toggles between **power-saver** and **performance** mode.
+`fml boost` toggles between power-saverand performancemode.
 
-- **power-saver** — decreases performance but preserves battery health
-- **performance** — maximum CPU speed, useful for shorter tasks.
+-power-saverdecreases performance but preserves battery health
+-performance maximum CPU speed, useful for shorter tasks.
 
-Run `fml boost` once to switch to performance and run  again to switch back.
+Run `fml boost` once to switch to performance and run  it again to switch back.
 Works with `powerprofilesctl` `tuned-adm`   and `cpupower`.
 
 ## Cleanup 
