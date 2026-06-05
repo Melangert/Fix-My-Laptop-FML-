@@ -10,9 +10,10 @@ A lightweight Linux system maintenance tool built for low-spec and older machine
 git clone https://github.com/Melangert/Fix-My-Laptop-FML-.git
 sudo chmod +x /usr/local/bin/fml
 ```
-or with the tar release
+or with the tar release cd into install directory then
 ```bash
-
+tar -xzf extract.tar.gz
+sudo install -m 755 fml /usr/local/bin/fml
 
 ```
 
