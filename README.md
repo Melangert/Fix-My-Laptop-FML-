@@ -12,6 +12,7 @@ cd Fix-My-Laptop-FML-
 
 sudo cp ./fml /usr/local/bin/fml
 sudo chmod +x /usr/local/bin/fml
+fml --help
 ```
 or with the tar release cd into install directory then
 ```bash
