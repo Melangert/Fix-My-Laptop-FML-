@@ -60,13 +60,13 @@ Works with `powerprofilesctl` `tuned-adm`   and `cpupower`.
 ## Cleanup 
 
 `fml clean` removes:
-- Unused packages 
+- unused system packages
 - Unused flatpak runtimes and oldsnap revisions
 - Thumbnail and browser caches
 - Your temp files from /tmp
 - System journal logs older than a week
 
-Always asks for confirmation before making any changes fml will  never touch your personal files or documents.
+Always asks for confirmation from you before making any changes. fml will  never touch your personal files or documents.
 
 ## Supported package managers
 
