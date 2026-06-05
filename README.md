@@ -84,4 +84,4 @@ MIT — Kevin Melangert
 
 
 ## Credits
-Used AI to deebug clean function and add temps and health.
+Used AI to debug clean function and add temps and health.
