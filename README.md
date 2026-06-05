@@ -31,7 +31,7 @@ sudo install -m 755 fml /usr/local/bin/fml
 
 ## How to use
 
-```bash
+
 fml              # Interactive menu
 fml status       # Show load, memory, and disk
 fml top          # Top CPU and memory processes
@@ -80,7 +80,7 @@ Always asks for confirmation before making any changes fml will  never touch you
 ## License
 
 MIT — Kevin Melangert
-```
+
 
 
 ## Credits
