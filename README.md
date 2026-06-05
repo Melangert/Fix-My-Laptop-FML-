@@ -69,12 +69,12 @@ Always asks for confirmation before making any changes fml will  never touch you
 
 ## Supported package managers
 
-| Manager | Distros |
-|---------|---------|
-| apt     | Debian, Ubuntu, Mint, Pop!_OS |
-| dnf     | Fedora, RHEL, CentOS Stream |
-| pacman  | Arch, Manjaro, EndeavourOS |
-| zypper  | openSUSE |
+| Manager | 
+|---------|
+| apt     | 
+| dnf     | 
+| pacman  |
+| zypper  |
 
   
 ## License
