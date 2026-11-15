@@ -6,7 +6,7 @@
 
 set -uo pipefail
 
-VERSION="1.2.0"
+VERSION="1.3.0"
 SCRIPT_NAME="fml"
 
 ## ---- color support -----------------------------------------
@@ -165,8 +165,13 @@ clean() {
     local browser_dirs=(
         "${HOME}/.cache/google-chrome/Default/Cache"
         "${HOME}/.cache/chromium/Default/Cache"
-        "${HOME}/.cache/mozilla/firefox"
     )
+    # Firefox profile cache is stored per profile; never target the profile root.
+    if [[ -d "${HOME}/.cache/mozilla/firefox" ]]; then
+        while IFS= read -r -d '' cache_dir; do
+            browser_dirs+=("$cache_dir")
+        done < <(find "${HOME}/.cache/mozilla/firefox" -mindepth 2 -maxdepth 2 -type d -name cache2 -print0 2>/dev/null)
+    fi
     for d in "${browser_dirs[@]}"; do
         local bm
         bm=$(dir_size_mb "$d")
@@ -174,8 +179,8 @@ clean() {
     done
 
 tmp_mb=$(
-    find /tmp -maxdepth 1 -user "$USER" -not -name "." \
-        -exec du -sm {} + 2>/dev/null |
+    find /tmp -mindepth 1 -maxdepth 1 -user "${USER:-}" -mtime +7 \
+        -exec du -sm -- {} + 2>/dev/null |
     awk '{ s += $1 } END { printf "%d", s }'
 )
 
@@ -275,9 +280,9 @@ tmp_mb=$(
     done
 
     info "Removing your temp files from /tmp..."
-    find /tmp -maxdepth 1 -user "$USER" -not -name "." \
-        -exec rm -rf {} + 2>/dev/null || true
-    success "Temp files cleaned."
+    find /tmp -mindepth 1 -maxdepth 1 -user "${USER:-}" -mtime +7 \
+        -exec rm -rf -- {} + 2>/dev/null || true
+    success "Temp files older than 7 days cleaned."
 
     if require_command journalctl; then
         info "Trimming system journal (keeping 7 days)..."
@@ -298,36 +303,48 @@ boost() {
         current=$(powerprofilesctl get 2>/dev/null || echo "unknown")
         info "Current profile: ${BOLD}${current}${RESET}"
         if [[ "$current" == "performance" ]]; then
-            powerprofilesctl set power-saver 2>/dev/null && method="powerprofilesctl"
-            success "Switched to power-saver — less heat, better battery life."
+            if powerprofilesctl set power-saver 2>/dev/null; then
+                method="powerprofilesctl"
+                success "Switched to power-saver — less heat, better battery life."
+            fi
         else
-            powerprofilesctl set performance 2>/dev/null && method="powerprofilesctl"
-            success "Switched to performance mode."
-            warn "Run 'fml boost' again to switch back to power-saver when done."
+            if powerprofilesctl set performance 2>/dev/null; then
+                method="powerprofilesctl"
+                success "Switched to performance mode."
+                warn "Run 'fml boost' again to switch back to power-saver when done."
+            fi
         fi
 
     elif require_command tuned-adm; then
         current=$(tuned-adm active 2>/dev/null | awk '{print $NF}' || echo "unknown")
         info "Current profile: ${BOLD}${current}${RESET}"
         if [[ "$current" == *"throughput"* || "$current" == *"performance"* ]]; then
-            run_sudo tuned-adm profile powersave 2>/dev/null && method="tuned-adm"
-            success "Switched to powersave mode."
+            if run_sudo tuned-adm profile powersave 2>/dev/null; then
+                method="tuned-adm"
+                success "Switched to powersave mode."
+            fi
         else
-            run_sudo tuned-adm profile throughput-performance 2>/dev/null && method="tuned-adm"
-            success "Switched to performance mode."
-            warn "Run 'fml boost' again to switch back when done."
+            if run_sudo tuned-adm profile throughput-performance 2>/dev/null; then
+                method="tuned-adm"
+                success "Switched to performance mode."
+                warn "Run 'fml boost' again to switch back when done."
+            fi
         fi
 
     elif require_command cpupower; then
         current=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || echo "unknown")
         info "Current governor: ${BOLD}${current}${RESET}"
         if [[ "$current" == "performance" ]]; then
-            run_sudo cpupower frequency-set -g powersave 2>/dev/null && method="cpupower"
-            success "Switched to powersave mode."
+            if run_sudo cpupower frequency-set -g powersave 2>/dev/null; then
+                method="cpupower"
+                success "Switched to powersave mode."
+            fi
         else
-            run_sudo cpupower frequency-set -g performance 2>/dev/null && method="cpupower"
-            success "Switched to performance mode."
-            warn "Run 'fml boost' again to switch back when done."
+            if run_sudo cpupower frequency-set -g performance 2>/dev/null; then
+                method="cpupower"
+                success "Switched to performance mode."
+                warn "Run 'fml boost' again to switch back when done."
+            fi
         fi
 
     elif [[ -f /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor ]]; then
@@ -343,7 +360,7 @@ boost() {
     fi
 
     if [[ -z "$method" ]]; then
-        error "Failed to switch power profile — try running with sudo."
+        error "Failed to switch power profile. Check whether this profile is supported and whether you have permission."
         return 1
     fi
 }

@@ -1,88 +1,58 @@
 # fml — Fix My Laptop
 
-A lightweight Linux system maintenance tool built for low-spec and older machines, doesnt magically imporve performance but it would be good to run it every once in a while if you feel your system slowing down.
-
-![fml screenshot](fml.png)
-
-## Install
-```bash
-
-git clone https://github.com/Melangert/Fix-My-Laptop-FML-.git
-cd Fix-My-Laptop-FML-
-
-sudo cp ./fml /usr/local/bin/fml
-sudo chmod +x /usr/local/bin/fml
-fml --help
-```
-or with the tar release cd into install directory then
-```bash
-tar -xzf extract.tar.gz
-sudo install -m 755 fml /usr/local/bin/fml
-
-```
-
+A lightweight Linux maintenance tool for older and low-resource machines. It reports system health and offers interactive cleanup and power-profile controls.
 
 ## Requirements
--any supported Linux distribution
--Bash
 
-## How to use
+- Linux
+- Bash 4 or newer
+- Standard system utilities: `awk`, `df`, `free`, `ps`
+- Optional tools are detected automatically: `sudo`, package managers, `flatpak`, `snap`, `powerprofilesctl`, `tuned-adm`, and `cpupower`
 
-Run `fml` to open the interactive menu.
+## Install
 
-### Commands
+Install from a local checkout:
 
-- `fml status` — Show CPU load, memory usage, and disk usage.
-- `fml top` — Display the highest CPU and memory consuming processes.
-- `fml clean` — Remove unused packages and caches.
-- `fml boost` — Toggle between performance and power-saving modes.
-- `fml health` — Run a system health check.
-- `fml temps` — Display hardware temperatures.
-- `fml fix` — Attempt to fix detected issues automatically.
-- `fml suggest` — Show recommendations based on your system.
-- `fml monitor` — Live system monitoring view.
+```bash
+git clone https://github.com/Melangert/Fix-My-Laptop-FML-.git
+cd Fix-My-Laptop-FML-
+sudo install -m 755 fml /usr/local/bin/fml
+fml --help
+```
 
-Example:
+Or download `fml-linux.tar.gz` from the [Releases page](https://github.com/Melangert/Fix-My-Laptop-FML-/releases), extract it, and install the script:
 
+```bash
+tar -xzf fml-linux.tar.gz
+sudo install -m 755 fml /usr/local/bin/fml
+```
 
-fml status
-fml clean --dry-run
-## Power Mode Toggle
+## Commands
 
-`fml boost` toggles between power-saverand performancemode.
+| Command | Description |
+| --- | --- |
+| `fml` | Open the interactive menu |
+| `fml status` | Show load, memory, disk, and uptime |
+| `fml top` | List the busiest processes |
+| `fml health` | Check load, RAM, disk, and swap pressure |
+| `fml temps` | Show available thermal sensor readings |
+| `fml suggest` | Print recommendations based on current metrics |
+| `fml fix` | Review detected issues and offer actions |
+| `fml boost` | Toggle the available performance profile |
+| `fml monitor` | Refresh status and suggestions every two seconds |
+| `fml clean --dry-run` | Preview eligible cleanup targets |
+| `fml clean` | Review and confirm cleanup actions |
 
--power-saverdecreases performance but preserves battery health
--performance maximum CPU speed, useful for shorter tasks.
+## Cleanup behavior
 
-Run `fml boost` once to switch to performance and run  it again to switch back.
-Works with `powerprofilesctl` `tuned-adm`   and `cpupower`.
+Cleanup asks before making changes. It can clear package-manager caches, unused Flatpak runtimes, disabled Snap revisions, thumbnail and browser caches, and system journal entries older than seven days. Temporary files in `/tmp` are eligible only when they belong to the current user and are more than seven days old. Close browsers before clearing their caches.
 
-## Cleanup 
+Use `fml clean --dry-run` to inspect approximate sizes first. Estimates are best-effort and may vary while applications are running.
 
-`fml clean` removes:
-- unused system packages
-- Unused flatpak runtimes and oldsnap revisions
-- Thumbnail and browser caches
-- Your temp files from /tmp
-- System journal logs older than a week
+## Power profiles
 
-Always asks for confirmation from you before making any changes. fml will  never touch your personal files or documents.
+`fml boost` uses the first available controller among `powerprofilesctl`, `tuned-adm`, and `cpupower`. The requested change may be unavailable if the system does not support that profile or requires elevated permissions.
 
-## Supported package managers
-
-| Manager | 
-|---------|
-| apt     | 
-| dnf     | 
-| pacman  |
-| zypper  |
-
-  
 ## License
 
-MIT — Kevin Melangert
-
-
-
-## Credits
-Used AI to debug clean function and add temps and health.
+MIT. See [LICENSE](LICENSE).

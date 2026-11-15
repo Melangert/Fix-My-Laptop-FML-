@@ -1,3 +1,12 @@
+fml (1.3.0-1) unstable; urgency=medium
+
+  * Limit /tmp cleanup to current-user entries older than seven days.
+  * Target Firefox cache directories instead of the profile cache root.
+  * Report power-profile success only after the change succeeds.
+  * Refresh usage documentation and version metadata.
+
+ -- Kevin Melangert <kosikevinonu@gmail.com>  Sat, 14 Nov 2026 00:00:00 -0500
+
 fml (1.1.0-1) unstable; urgency=low
 
   * boost() is now a proper power profile toggle.
